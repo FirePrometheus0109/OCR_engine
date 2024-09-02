@@ -4,18 +4,17 @@ from geometry import BoundingBox
 import math
 from typing import Dict, List, Any
 
-# Function to make the PDF document searchable
 def make_pdf_doc_searchable(
     pdf_doc: fitz.Document,
     textract_pages: List[Dict[str, Any]],
     add_word_bbox: bool = False,
     show_selectable_char: bool = False,
-    pdf_image_dpi: int = 100,  # Reduced DPI
+    pdf_image_dpi: int = 100,
     verbose: bool = False,
 ) -> fitz.Document:
     # Create a new PDF for the output
     output_pdf = fitz.open()
-    
+
     # Iterate over each page and add text overlay
     for page_number, page in enumerate(textract_pages):
         # Open the original page
@@ -23,9 +22,9 @@ def make_pdf_doc_searchable(
         
         # Create a new page with the same size
         output_page = output_pdf.new_page(width=pdf_page.rect.width, height=pdf_page.rect.height)
-
-        # Copy original page content to the new page
-        output_page.show_pdf_page(pdf_page.rect, pdf_doc, page_number)
+        
+        # Copy non-text (e.g., images, graphics) content from the original page
+        output_page.show_pdf_page(pdf_page.rect, pdf_doc, page_number, clip=pdf_page.rect)
 
         blocks = page.get("Blocks", [])
         for blocki, block in enumerate(blocks):
@@ -46,12 +45,12 @@ def make_pdf_doc_searchable(
                     math.floor((bbox.width / text_length) * 12)
                 )
                 output_page.insert_text(
-                    point=fitz.Point(bbox.left, bbox.bottom),  # bottom-left of 1st char
+                    point=fitz.Point(bbox.left, bbox.bottom),
                     text=text,
-                    fontname="helv",  # the default font
+                    fontname="helv",
                     fontsize=fontsize_optimal,
                     rotate=0,
-                    color=(0, 0, 0),  # black text
+                    color=(0, 0, 0),
                     fill_opacity=1 if show_selectable_char else 0,
                 )
 
@@ -74,7 +73,7 @@ selectable_pdf_doc = make_pdf_doc_searchable(
     textract_pages=data,
     add_word_bbox=True,
     show_selectable_char=False,
-    pdf_image_dpi=100,  # Reduced DPI
+    pdf_image_dpi=100,
     verbose=True,
 )
 
